@@ -70,14 +70,14 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          echo "🚀 Deploying fd_visiology-report-builder-main..."
+          echo "🚀 Deploying fd-visiology-report-builder-main..."
           ssh-agent bash -c "
             ssh-add - <<< \"$SSH_KEY\"
             ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -p ${{ secrets.SSH_PORT }} \
               ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} \
-              'kubectl rollout restart deployment/fd_visiology-report-builder-main -n ${{ env.NAMESPACE }} && \
-               kubectl rollout status deployment/fd_visiology-report-builder-main -n ${{ env.NAMESPACE }} --timeout=300s'
+              'kubectl rollout restart deployment/fd-visiology-report-builder-main -n ${{ env.NAMESPACE }} && \
+               kubectl rollout status deployment/fd-visiology-report-builder-main -n ${{ env.NAMESPACE }} --timeout=300s'
           "
           echo "✅ Deployment completed successfully"
 
@@ -85,5 +85,5 @@ jobs:
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎉 VRB main deployment updated!"
-          echo "  ✅ fd_visiology-report-builder-main"
+          echo "  ✅ fd-visiology-report-builder-main"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
