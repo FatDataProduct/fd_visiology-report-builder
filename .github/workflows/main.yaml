@@ -14,7 +14,7 @@ env:
 jobs:
   # Сборка и пуш Docker образа
   build-and-push:
-    runs-on: [self-hosted, Linux]
+    runs-on: self-hosted
     steps:
       - name: Pre-cleanup workspace
         run: |
