@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Vite build output
+dist/
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+*.log
+npm-debug.log*
+.npm
+.cache
+.vite
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Optional tooling
+.sla/
