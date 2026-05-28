@@ -4,8 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build:client": "vite build",
+    "build:server": "vite build --ssr src/entry-server.jsx",
+    "prerender": "node scripts/prerender.mjs",
+    "build": "npm run build:client && npm run build:server && npm run prerender",
+    "preview": "vite preview --outDir dist"
   },
   "dependencies": {
     "react": "^18.3.1",

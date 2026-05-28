@@ -1,0 +1,11 @@
+# Visiology Report Builder — robots.txt
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Allow: /
+
+# Block server/prerender artifacts that aren't meant to be indexed
+Disallow: /server/
+
+# Sitemap location
+Sitemap: https://vrb.fatdata.ru/sitemap.xml
