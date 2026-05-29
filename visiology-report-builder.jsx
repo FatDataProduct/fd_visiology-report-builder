@@ -30,6 +30,21 @@ const COND_OPERATORS = [
 ];
 
 const A4_ROWS_APPROX = 45;
+const MOBILE_BREAKPOINT = 768;
+
+function useIsMobile() {
+  const getValue = () => (typeof window !== "undefined" ? window.innerWidth <= MOBILE_BREAKPOINT : false);
+  const [isMobile, setIsMobile] = useState(getValue);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const onResize = () => setIsMobile(getValue());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  return isMobile;
+}
 
 /* ═══════════════════════════════════════════
    BLOCK TEMPLATES
@@ -252,7 +267,7 @@ function importXLSX(buf) {
    CELL EDITOR
    ═══════════════════════════════════════════ */
 
-function CellEditor({ cell, onSave, onClose }) {
+function CellEditor({ cell, onSave, onClose, isMobile = false }) {
   const [s, setS] = useState({
     v: cell?.v || "", b: cell?.b || false, bg: cell?.bg || "", fc: cell?.fc || "",
     mk: cell?.mk || false, mt: cell?.mt || "cell", fs: cell?.fs || 11, al: cell?.al || "left",
@@ -264,9 +279,21 @@ function CellEditor({ cell, onSave, onClose }) {
   const rmCR = (i) => set("condRules", s.condRules.filter((_, j) => j !== i));
   const updCR = (i, k, val) => { const r = [...s.condRules]; r[i] = { ...r[i], [k]: val }; set("condRules", r); };
 
+  const mobileModal = isMobile
+    ? {
+        ...modal,
+        width: "100vw",
+        maxWidth: "100vw",
+        maxHeight: "100dvh",
+        height: "100dvh",
+        borderRadius: 0,
+        padding: 16,
+      }
+    : modal;
+
   return (
     <div style={overlay} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={modal}>
+      <div onClick={(e) => e.stopPropagation()} style={mobileModal}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 18 }}>
           <div style={secTitle}>Редактор ячейки</div>
           <button onClick={onClose} style={{ ...tinyBtn, fontSize: 16 }}>✕</button>
@@ -283,7 +310,7 @@ function CellEditor({ cell, onSave, onClose }) {
         </div>
         {s.fm && <div style={{ fontSize: 9, color: "#5A8A7A", marginTop: 3 }}>Пример: =SUM(B2:B10), =C3/B3*100</div>}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginTop: 12 }}>
           <div>
             <label style={lbl}>Фон</label>
             <div style={{ display: "flex", gap: 4 }}>
@@ -300,7 +327,7 @@ function CellEditor({ cell, onSave, onClose }) {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
           <div><label style={lbl}>Размер</label><input type="number" value={s.fs} onChange={(e) => set("fs", +e.target.value)} style={inp} min={8} max={36} /></div>
           <div><label style={lbl}>Выравнивание</label><select value={s.al} onChange={(e) => set("al", e.target.value)} style={inp}><option value="left">← Лево</option><option value="center">Центр</option><option value="right">Право →</option></select></div>
           <div><label style={lbl}>Жирный</label><button onClick={() => set("b", !s.b)} style={{ ...inp, cursor: "pointer", fontWeight: s.b ? 900 : 400, background: s.b ? "#03FF94" : "#000D0A", color: s.b ? "#000D0A" : "#5A8A7A", textAlign: "center", border: s.b ? "1px solid #03FF94" : "1px solid #007359" }}>{s.b ? "B ✓" : "B"}</button></div>
@@ -317,7 +344,7 @@ function CellEditor({ cell, onSave, onClose }) {
               {MARKER_TYPES.map((t) => <option key={t.value} value={t.value}>{t.icon} {t.label} — {t.desc}</option>)}
             </select>
             {s.mt === "cell" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
                 <div><label style={lbl}>Индекс строки</label><input type="number" value={s.mOpts.rowIndex ?? ""} onChange={(e) => setMO("rowIndex", e.target.value === "" ? undefined : +e.target.value)} style={inp} min={0} placeholder="0" /></div>
                 <div><label style={lbl}>Индекс столбца</label><input type="number" value={s.mOpts.colIndex ?? ""} onChange={(e) => setMO("colIndex", e.target.value === "" ? undefined : +e.target.value)} style={inp} min={0} placeholder="0" /></div>
               </div>
@@ -359,7 +386,7 @@ function CellEditor({ cell, onSave, onClose }) {
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 18, justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 18, justifyContent: "flex-end", position: isMobile ? "sticky" : "static", bottom: isMobile ? 0 : undefined, background: isMobile ? "#1C3D36" : "transparent", paddingTop: isMobile ? 10 : 0 }}>
           <button onClick={onClose} style={btnSec}>Отмена</button>
           <button onClick={() => onSave({ ...cell, ...s })} style={btnPri}>Сохранить</button>
         </div>
@@ -428,10 +455,10 @@ function PCell({ cell, onClick }) {
    TEMPLATE CHOOSER
    ═══════════════════════════════════════════ */
 
-function TemplateChooser({ onSelect, onClose }) {
+function TemplateChooser({ onSelect, onClose, isMobile = false }) {
   return (
     <div style={overlay} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} style={{ ...modal, width: 520 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ ...modal, width: isMobile ? "100vw" : 520, maxWidth: isMobile ? "100vw" : 520, maxHeight: isMobile ? "100dvh" : modal.maxHeight, height: isMobile ? "100dvh" : "auto", borderRadius: isMobile ? 0 : modal.borderRadius }}>
         <div style={{ ...secTitle, marginBottom: 16 }}>Библиотека шаблонов</div>
         {TEMPLATE_LIBRARY.map((tpl) => (
           <div key={tpl.id} onClick={() => onSelect(tpl)} style={{
@@ -457,7 +484,7 @@ function TemplateChooser({ onSelect, onClose }) {
    ONBOARDING MODAL
    ═══════════════════════════════════════════ */
 
-function OnboardingModal({ onStart, onTemplate }) {
+function OnboardingModal({ onStart, onTemplate, isMobile = false }) {
   const steps = [
     { n: "1", color: "#03FF94", title: "Добавьте блоки", desc: "Выбирайте из палитры слева — Шапка, KPI, Таблица, Формулы" },
     { n: "2", color: "#00DBFF", title: "Настройте маркеры", desc: "Кликайте на ячейки и привязывайте маркеры {{VIS_*}} к данным Visiology" },
@@ -465,7 +492,7 @@ function OnboardingModal({ onStart, onTemplate }) {
   ];
   return (
     <div style={overlay}>
-      <div style={{ ...modal, width: 460, textAlign: "center" }}>
+      <div style={{ ...modal, width: isMobile ? "100vw" : 460, maxWidth: isMobile ? "100vw" : 460, maxHeight: isMobile ? "100dvh" : modal.maxHeight, height: isMobile ? "100dvh" : "auto", borderRadius: isMobile ? 0 : modal.borderRadius, textAlign: "center" }}>
         {/* Logo */}
         <div style={{ width: 58, height: 58, borderRadius: 16, background: "linear-gradient(135deg, #03FF94, #00DBFF)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 900, color: "#000D0A", margin: "0 auto 16px", boxShadow: "0 0 24px rgba(3,255,148,0.35)" }}>V</div>
         <div style={{ fontSize: 18, fontWeight: 800, color: "#FFFFFF", marginBottom: 4, letterSpacing: -0.3 }}>Visiology Report Builder</div>
@@ -495,6 +522,7 @@ function OnboardingModal({ onStart, onTemplate }) {
    ═══════════════════════════════════════════ */
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [sheets, _setSheets] = useState(() => [{ id: uid(), name: "Лист 1", blocks: [] }]);
   const [tab, setTab] = useState(0);
   const [editing, setEditing] = useState(null);
@@ -504,6 +532,8 @@ export default function App() {
   const [note, setNote] = useState(null);
   const [dragBlock, setDragBlock] = useState(null);
   const [dragOver, setDragOver] = useState(null);
+  const [mobileTab, setMobileTab] = useState("preview");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(
     () => typeof window !== "undefined" && !localStorage.getItem("vrb_onboarded")
   );
@@ -561,6 +591,13 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!isMobile) {
+      setMobileMenuOpen(false);
+      setMobileTab("preview");
+    }
+  }, [isMobile]);
+
   const sh = sheets[tab] || sheets[0];
   const updSh = useCallback((i, fn) => setAndPush((p) => p.map((s, j) => j === i ? fn(s) : s)), [setAndPush]);
 
@@ -602,17 +639,20 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: "#000D0A", fontFamily: "'TT Commons Pro','Inter',-apple-system,BlinkMacSystemFont,sans-serif", color: "#FFFFFF" }}>
       {note && <div style={{ position: "fixed", top: 14, right: 14, zIndex: 9999, padding: "10px 18px", borderRadius: 9, background: note.ok ? "#007359" : "#7f1d1d", color: "#FFFFFF", fontSize: 11, fontWeight: 600, boxShadow: "0 0 20px rgba(3,255,148,0.2), 0 8px 28px rgba(0,0,0,0.5)", animation: "fi .2s ease", border: note.ok ? "1px solid #03FF9466" : "none" }}>{note.m}</div>}
-      {showTpl && <TemplateChooser onSelect={applyTpl} onClose={() => setShowTpl(false)} />}
+      {showTpl && <TemplateChooser onSelect={applyTpl} onClose={() => setShowTpl(false)} isMobile={isMobile} />}
       {showOnboarding && (
         <OnboardingModal
           onStart={() => { setShowOnboarding(false); localStorage.setItem("vrb_onboarded", "1"); }}
           onTemplate={() => { setShowOnboarding(false); localStorage.setItem("vrb_onboarded", "1"); setShowTpl(true); }}
+          isMobile={isMobile}
         />
       )}
-      {showImp && <div style={overlay} onClick={() => setShowImp(false)}><div onClick={(e) => e.stopPropagation()} style={modal}><div style={{ ...secTitle, marginBottom: 12 }}>Импорт JSON</div><textarea value={impText} onChange={(e) => setImpText(e.target.value)} style={{ ...inp, height: 160, resize: "vertical", fontFamily: "'TT Commons Pro','Inter',monospace", fontSize: 10 }} placeholder='{"sheets":[...]}' /><div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end" }}><button onClick={() => setShowImp(false)} style={btnSec}>Отмена</button><button onClick={handleImpJSON} style={btnPri}>Импорт</button></div></div></div>}
-      {editing && <CellEditor cell={sh.blocks[editing.b]?.rows[editing.r]?.[editing.c]} onSave={(d) => updateCell(editing.b, editing.r, editing.c, d)} onClose={() => setEditing(null)} />}
+      {showImp && <div style={overlay} onClick={() => setShowImp(false)}><div onClick={(e) => e.stopPropagation()} style={{ ...modal, width: isMobile ? "calc(100vw - 20px)" : modal.width, maxHeight: isMobile ? "calc(100dvh - 20px)" : modal.maxHeight }}><div style={{ ...secTitle, marginBottom: 12 }}>Импорт JSON</div><textarea value={impText} onChange={(e) => setImpText(e.target.value)} style={{ ...inp, height: 160, resize: "vertical", fontFamily: "'TT Commons Pro','Inter',monospace", fontSize: 10 }} placeholder='{"sheets":[...]}' /><div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end", flexWrap: isMobile ? "wrap" : "nowrap" }}><button onClick={() => setShowImp(false)} style={btnSec}>Отмена</button><button onClick={handleImpJSON} style={btnPri}>Импорт</button></div></div></div>}
+      {editing && <CellEditor isMobile={isMobile} cell={sh.blocks[editing.b]?.rows[editing.r]?.[editing.c]} onSave={(d) => updateCell(editing.b, editing.r, editing.c, d)} onClose={() => setEditing(null)} />}
       <input ref={fRef} type="file" accept=".xlsx,.xls" style={{ display: "none" }} onChange={handleFile} />
 
+      {!isMobile && (
+        <>
       {/* HEADER */}
       <header style={{ padding: "11px 22px", borderBottom: "1px solid #007359", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,13,10,0.95)", backdropFilter: "blur(12px)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
@@ -770,6 +810,151 @@ export default function App() {
           </div>
         </main>
       </div>
+        </>
+      )}
+
+      {isMobile && (
+        <>
+          <header style={{ padding: "10px 12px", borderBottom: "1px solid #007359", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,13,10,0.95)", position: "sticky", top: 0, zIndex: 40 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #03FF94, #00DBFF)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#000D0A", boxShadow: "0 0 10px rgba(3,255,148,0.25)" }}>V</div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#FFFFFF" }}>VRB</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button onClick={undo} disabled={!histStats.idx} style={{ ...hBtn, opacity: histStats.idx ? 1 : 0.32, padding: "5px 9px", fontSize: 13 }}>↩</button>
+              <button onClick={redo} disabled={histStats.idx >= histStats.total - 1} style={{ ...hBtn, opacity: histStats.idx < histStats.total - 1 ? 1 : 0.32, padding: "5px 9px", fontSize: 13 }}>↪</button>
+              <button onClick={() => { exportXLSX(sheets); flash("XLSX экспортирован"); }} style={{ ...btnPri, padding: "7px 10px", fontSize: 10 }}>↑ XLSX</button>
+              <button onClick={() => setMobileMenuOpen(true)} style={{ ...hBtn, padding: "5px 9px" }}>⋯</button>
+            </div>
+          </header>
+
+          {mobileMenuOpen && (
+            <div style={overlay} onClick={() => setMobileMenuOpen(false)}>
+              <div onClick={(e) => e.stopPropagation()} style={{ ...modal, width: "calc(100vw - 16px)", marginTop: "auto", borderRadius: 14, padding: 14 }}>
+                <div style={{ ...secTitle, marginBottom: 10 }}>Действия</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <button onClick={() => { setMobileMenuOpen(false); setShowTpl(true); }} style={btnSec}>📚 Шаблоны</button>
+                  <button onClick={() => { setMobileMenuOpen(false); fRef.current?.click(); }} style={btnSec}>📂 Импорт XLSX</button>
+                  <button onClick={() => { setMobileMenuOpen(false); setShowImp(true); }} style={btnSec}>↓ Импорт JSON</button>
+                  <button onClick={() => { const j = JSON.stringify({ version: "1.0", app: "vrb", sheets }, null, 2); const b = new Blob([j], { type: "application/json" }); const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = "template.json"; a.click(); URL.revokeObjectURL(u); flash("JSON ↑"); setMobileMenuOpen(false); }} style={btnSec}>↑ Экспорт JSON</button>
+                  <button onClick={() => { setMobileMenuOpen(false); setShowOnboarding(true); }} style={btnSec}>? Как это работает</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ minHeight: "calc(100dvh - 50px)", display: "flex", flexDirection: "column", paddingBottom: 64 }}>
+            <div style={{ padding: "8px 10px", borderBottom: "1px solid #007359", background: "#0A1A14", overflowX: "auto", whiteSpace: "nowrap" }}>
+              {sheets.map((s, i) => (
+                <span key={s.id} style={{ display: "inline-flex", alignItems: "center", marginRight: 4 }}>
+                  <button onClick={() => setTab(i)} style={{ padding: "5px 11px", fontSize: 10, fontWeight: tab === i ? 700 : 500, background: tab === i ? "#03FF94" : "#1C3D36", color: tab === i ? "#000D0A" : "#B4FFDF", border: "1px solid #007359", borderRadius: 999, cursor: "pointer" }}>{s.name}</button>
+                  {sheets.length > 1 && <button onClick={() => rmSheet(i)} style={{ ...tinyBtn, color: "#5A8A7A", fontSize: 10 }}>✕</button>}
+                </span>
+              ))}
+              <button onClick={addSheet} style={{ ...hBtn, borderStyle: "dashed", padding: "5px 10px" }}>+</button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: "auto", padding: 10, background: mobileTab === "preview" ? "#F0FFF8" : "#0A1A14" }}>
+              {mobileTab === "preview" && (
+                <>
+                  <div style={{ fontSize: 10, color: "#007359", marginBottom: 8, fontWeight: 600 }}>≈ {totalRows} строк · {Math.max(1, Math.ceil(totalRows / A4_ROWS_APPROX))} стр.</div>
+                  <div style={{ background: "#fff", borderRadius: 10, boxShadow: "0 2px 12px rgba(0,115,89,0.08)", padding: 12, minHeight: 260, border: "1px solid #007359", position: "relative" }}>
+                    {sh.blocks.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "10px 4px" }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#007359", marginBottom: 8 }}>С чего начать?</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8, marginBottom: 10 }}>
+                          {[
+                            { icon: "⊞", color: "#00DBFF", title: "Добавьте блок" },
+                            { icon: "◎", color: "#03FF94", title: "Настройте маркеры" },
+                            { icon: "↑", color: "#B4FFDF", title: "Экспортируйте XLSX" },
+                          ].map((s, i) => (
+                            <div key={i} style={{ background: "#F0FFF8", border: `1.5px solid ${s.color}55`, borderRadius: 10, padding: "10px", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
+                              <div style={{ fontSize: 18, color: s.color }}>{s.icon}</div>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: "#007359" }}>{s.title}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          <button onClick={() => setShowTpl(true)} style={{ ...btnPri, width: "100%" }}>📚 Открыть шаблон</button>
+                          <button onClick={() => setMobileTab("blocks")} style={{ ...btnSec, width: "100%" }}>⊞ Добавить блок</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: "auto" }}>
+                        <div style={{ minWidth: 560 }}>
+                          {sh.blocks.map((bl, bi) => {
+                            const rOff = sh.blocks.slice(0, bi).reduce((a, b) => a + b.rows.length, 0);
+                            return (
+                              <table key={bl.id} style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                                <tbody>
+                                  {bl.rows.map((row, ri) => (
+                                    <tr key={ri}>
+                                      <td style={{ width: 24, padding: "1px 3px", fontSize: 8, color: "#007359", textAlign: "right", verticalAlign: "middle", border: "none", background: "#F0FFF8", userSelect: "none" }}>{rOff + ri + 1}</td>
+                                      {row.map((cell, ci) => cell === null ? null : <PCell key={ci} cell={cell} onClick={() => setEditing({ b: bi, r: ri, c: ci })} />)}
+                                      <td style={{ width: 18, border: "none", background: "#F0FFF8" }}><button onClick={() => delRow(bi, ri)} style={{ ...tinyBtn, fontSize: 8, color: "#007359", opacity: 0.5 }}>✕</button></td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {mobileTab === "blocks" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {BLOCK_TEMPLATES.map((t) => (
+                    <button key={t.id} onClick={() => { addBlock(t.id); flash(`Добавлен блок: ${t.label}`); setMobileTab("preview"); }} style={{ textAlign: "left", padding: "11px 12px", borderRadius: 10, background: "#1C3D36", color: "#FFFFFF", border: "1px solid #007359", display: "flex", alignItems: "center", gap: 9 }}>
+                      <span style={{ fontSize: 16, color: "#03FF94" }}>{t.icon}</span>
+                      <span>
+                        <span style={{ display: "block", fontSize: 12, fontWeight: 700 }}>{t.label}</span>
+                        <span style={{ display: "block", fontSize: 10, color: "#B4FFDF" }}>{t.desc}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {mobileTab === "structure" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  {sh.blocks.length === 0 ? <div style={{ color: "#5A8A7A", fontSize: 12, textAlign: "center", paddingTop: 30 }}>Нет блоков на листе</div> : sh.blocks.map((bl, bi) => (
+                    <div key={bl.id} style={{ padding: "9px 10px", borderRadius: 10, background: "#1C3D36", border: "1px solid #007359", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ color: "#B4FFDF", fontSize: 11 }}>{BLOCK_TEMPLATES.find((t) => t.id === bl.tid)?.icon || "◇"} {bl.label}</div>
+                      <div style={{ display: "flex", gap: 2 }}>
+                        <button onClick={() => moveBlock(bi, bi - 1)} style={tinyBtn}>↑</button>
+                        <button onClick={() => moveBlock(bi, bi + 1)} style={tinyBtn}>↓</button>
+                        <button onClick={() => addRow(bi)} style={tinyBtn}>+r</button>
+                        <button onClick={() => addCol(bi)} style={tinyBtn}>+c</button>
+                        <button onClick={() => rmBlock(bi)} style={{ ...tinyBtn, color: "#ef4444" }}>✕</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {mobileTab === "markers" && <MarkerPanel sheets={sheets} />}
+            </div>
+          </div>
+
+          <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, borderTop: "1px solid #007359", background: "rgba(10,26,20,0.98)", display: "grid", gridTemplateColumns: "repeat(4,1fr)", padding: "6px 6px calc(6px + env(safe-area-inset-bottom, 0px))" }}>
+            {[
+              { key: "preview", icon: "📄", label: "Превью" },
+              { key: "blocks", icon: "⊞", label: "Блоки" },
+              { key: "structure", icon: "☰", label: "Структура" },
+              { key: "markers", icon: "◎", label: "Маркеры" },
+            ].map((item) => (
+              <button key={item.key} onClick={() => setMobileTab(item.key)} style={{ border: "none", background: mobileTab === item.key ? "#03FF9422" : "transparent", color: mobileTab === item.key ? "#03FF94" : "#B4FFDF", borderRadius: 8, padding: "8px 4px", fontSize: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                <span style={{ fontSize: 13 }}>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
+        </>
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
