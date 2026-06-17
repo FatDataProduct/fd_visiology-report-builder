@@ -3,10 +3,105 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visiology Report Builder</title>
+
+    <!-- ═══════════════════════════════════════
+         PRIMARY META TAGS
+         ═══════════════════════════════════════ -->
+    <title>Visiology Report Builder — Конструктор шаблонов Excel-отчётов</title>
+    <meta name="title"       content="Visiology Report Builder — Конструктор шаблонов Excel-отчётов" />
+    <meta name="description" content="Визуальный конструктор шаблонов регламентных отчётов для платформы Visiology. Создавайте Excel-шаблоны с маркерами данных, формулами и условным форматированием — без программирования." />
+    <meta name="keywords"    content="Visiology, report builder, конструктор отчётов, Excel шаблоны, регламентные отчёты, XLSX, маркеры данных, бизнес-аналитика, BI отчёты, FatData" />
+    <meta name="author"      content="FatData" />
+    <meta name="robots"      content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="theme-color" content="#080b12" />
+    <meta name="application-name" content="Visiology Report Builder" />
+    <link rel="canonical"    href="https://vrb.fatdata.ru/" />
+
+    <!-- ═══════════════════════════════════════
+         OPEN GRAPH (Facebook / LinkedIn / Telegram)
+         ═══════════════════════════════════════ -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:url"         content="https://vrb.fatdata.ru/" />
+    <meta property="og:site_name"   content="Visiology Report Builder" />
+    <meta property="og:locale"      content="ru_RU" />
+    <meta property="og:title"       content="Visiology Report Builder — Конструктор шаблонов Excel-отчётов" />
+    <meta property="og:description" content="Визуальный конструктор шаблонов регламентных отчётов для платформы Visiology. Создавайте Excel-шаблоны с маркерами данных, формулами и условным форматированием." />
+    <meta property="og:image"       content="https://vrb.fatdata.ru/og-image.svg" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt"    content="Visiology Report Builder — интерфейс конструктора отчётов" />
+
+    <!-- ═══════════════════════════════════════
+         TWITTER / X CARD
+         ═══════════════════════════════════════ -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:url"         content="https://vrb.fatdata.ru/" />
+    <meta name="twitter:title"       content="Visiology Report Builder — Конструктор шаблонов Excel-отчётов" />
+    <meta name="twitter:description" content="Визуальный конструктор шаблонов регламентных отчётов для платформы Visiology." />
+    <meta name="twitter:image"       content="https://vrb.fatdata.ru/og-image.svg" />
+
+    <!-- ═══════════════════════════════════════
+         STRUCTURED DATA — SoftwareApplication
+         ═══════════════════════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Visiology Report Builder",
+      "alternateName": "VRB",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "ReportingTool",
+      "operatingSystem": "Web",
+      "browserRequirements": "Requires JavaScript",
+      "description": "Визуальный конструктор шаблонов регламентных отчётов для платформы Visiology. Создавайте Excel-шаблоны с маркерами данных, формулами и условным форматированием без программирования.",
+      "url": "https://vrb.fatdata.ru/",
+      "screenshot": "https://vrb.fatdata.ru/og-image.svg",
+      "author": {
+        "@type": "Organization",
+        "name": "FatData",
+        "url": "https://fatdata.ru"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "RUB"
+      },
+      "featureList": [
+        "Визуальный drag-and-drop редактор Excel-шаблонов",
+        "Маркеры данных Visiology: ячейка (VAL), таблица (TBL), столбец (COL)",
+        "Условное форматирование с правилами",
+        "Excel-формулы в ячейках (SUM, IF, AVERAGE и др.)",
+        "Импорт и экспорт XLSX через SheetJS",
+        "Библиотека готовых шаблонов отчётов",
+        "Мультилистовые Excel-книги",
+        "Undo / Redo до 50 шагов",
+        "JSON-сохранение и восстановление шаблонов"
+      ],
+      "inLanguage": "ru"
+    }
+    </script>
+
+    <!-- ═══════════════════════════════════════
+         PERFORMANCE HINTS
+         ═══════════════════════════════════════ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- ═══════════════════════════════════════
+         ICONS
+         ═══════════════════════════════════════ -->
+    <link rel="icon"             type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon"             type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon"                  href="/favicon.png" />
+    <meta name="msapplication-TileImage"          content="/favicon.png" />
+    <meta name="msapplication-TileColor"          content="#080b12" />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      #ssr-outlet — заменяется pre-rendered HTML во время сборки (scripts/prerender.mjs).
+      Если скрипт не запущен, React монтируется поверх пустого div (стандартный SPA режим).
+    -->
+    <div id="root"><!--ssr-outlet--></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
