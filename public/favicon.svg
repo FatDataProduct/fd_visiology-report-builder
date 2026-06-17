@@ -1,0 +1,8 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FatData">
+  <rect width="64" height="64" rx="14" fill="#000D0A"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" fill="#03FF94"
+        d="M18.5 16 L37 16 A11 11 0 0 1 48 27 L48 48 L18.5 48 L16 45.5 L16 18.5 Z
+           M20 19.5 L23.5 19.5 L23.5 23 L22 23 L22 21.5 L20 21.5 Z
+           M26.2 19.5 L29.7 19.5 L29.7 21.5 L27.7 21.5 L27.7 23 L26.2 23 Z
+           M16 28.5 L26 28.5 L26 26.5 L29.5 26.5 L29.5 31 L16 31 Z"/>
+</svg>

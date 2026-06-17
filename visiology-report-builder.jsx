@@ -47,6 +47,35 @@ function useIsMobile() {
 }
 
 /* ═══════════════════════════════════════════
+   FATDATA LOGO MARK
+   ═══════════════════════════════════════════ */
+
+function FatDataLogo({ size = 32, color = "#03FF94", style }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-label="FatData"
+      style={style}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        fill={color}
+        d="M18.5 16 L37 16 A11 11 0 0 1 48 27 L48 48 L18.5 48 L16 45.5 L16 18.5 Z
+           M20 19.5 L23.5 19.5 L23.5 23 L22 23 L22 21.5 L20 21.5 Z
+           M26.2 19.5 L29.7 19.5 L29.7 21.5 L27.7 21.5 L27.7 23 L26.2 23 Z
+           M16 28.5 L26 28.5 L26 26.5 L29.5 26.5 L29.5 31 L16 31 Z"
+      />
+    </svg>
+  );
+}
+
+/* ═══════════════════════════════════════════
    BLOCK TEMPLATES
    ═══════════════════════════════════════════ */
 
@@ -494,7 +523,7 @@ function OnboardingModal({ onStart, onTemplate, isMobile = false }) {
     <div style={overlay}>
       <div style={{ ...modal, width: isMobile ? "100vw" : 460, maxWidth: isMobile ? "100vw" : 460, maxHeight: isMobile ? "100dvh" : modal.maxHeight, height: isMobile ? "100dvh" : "auto", borderRadius: isMobile ? 0 : modal.borderRadius, textAlign: "center" }}>
         {/* Logo */}
-        <div style={{ width: 58, height: 58, borderRadius: 16, background: "linear-gradient(135deg, #03FF94, #00DBFF)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 900, color: "#000D0A", margin: "0 auto 16px", boxShadow: "0 0 24px rgba(3,255,148,0.35)" }}>V</div>
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: "#0A1A14", border: "1px solid #007359", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", boxShadow: "0 0 24px rgba(3,255,148,0.3)" }}><FatDataLogo size={46} /></div>
         <div style={{ fontSize: 18, fontWeight: 800, color: "#FFFFFF", marginBottom: 4, letterSpacing: -0.3 }}>Visiology Report Builder</div>
         <div style={{ fontSize: 11, color: "#B4FFDF", marginBottom: 24 }}>Конструктор шаблонов регламентных отчётов</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24, textAlign: "left" }}>
@@ -656,7 +685,7 @@ export default function App() {
       {/* HEADER */}
       <header style={{ padding: "11px 22px", borderBottom: "1px solid #007359", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,13,10,0.95)", backdropFilter: "blur(12px)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #03FF94, #00DBFF)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 900, color: "#000D0A", boxShadow: "0 0 12px rgba(3,255,148,0.4)" }}>V</div>
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: "#0A1A14", border: "1px solid #007359", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 12px rgba(3,255,148,0.25)" }}><FatDataLogo size={26} /></div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 800, color: "#FFFFFF", letterSpacing: -0.3 }}>Visiology Report Builder</div>
             <div style={{ fontSize: 8, color: "#5A8A7A", letterSpacing: 1, textTransform: "uppercase" }}>Конструктор шаблонов регламентных отчётов</div>
@@ -817,7 +846,7 @@ export default function App() {
         <>
           <header style={{ padding: "10px 12px", borderBottom: "1px solid #007359", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(0,13,10,0.95)", position: "sticky", top: 0, zIndex: 40 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #03FF94, #00DBFF)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#000D0A", boxShadow: "0 0 10px rgba(3,255,148,0.25)" }}>V</div>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: "#0A1A14", border: "1px solid #007359", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(3,255,148,0.2)" }}><FatDataLogo size={22} /></div>
               <div style={{ fontSize: 12, fontWeight: 800, color: "#FFFFFF" }}>VRB</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
