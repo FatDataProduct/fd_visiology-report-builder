@@ -7,7 +7,6 @@ jobs:
     remoteUrl: https://github.com/FatDataProduct/fd_visiology-report-builder.git
     userName: x-access-token
     passwordSecret: github-access-token
-    syncToChildProject: false
     refs: refs/heads/* refs/tags/*
     withLfs: false
     force: false
@@ -19,3 +18,62 @@ jobs:
   maxRetries: 3
   retryDelay: 30
   timeout: 3600
+- name: build-and-push
+  jobExecutor: fdp-docker
+  steps:
+  - !CheckoutStep
+    name: checkout
+    cloneCredential: !DefaultCredential {}
+    withLfs: false
+    withSubmodules: false
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  - !BuildImageStep
+    name: oci-build-push
+    buildPath: .
+    dockerfile: Dockerfile
+    tags: ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@branch@ ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@commit_hash@
+    moreOptions: --build-arg APP_ENV=production
+    registryLogins:
+    - registryUrl: ghcr.io
+      userName: tokuseiHagane
+      passwordSecret: ghcr-token
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  retryCondition: never
+  maxRetries: 1
+  retryDelay: 30
+  timeout: 7200
+- name: deploy
+  jobExecutor: fdp-docker
+  steps:
+  - !CommandStep
+    name: k8s-rollout-restart
+    image: alpine:3.20
+    commands:
+    - set -eu
+    - apk add --no-cache openssh-client >/dev/null
+    - SERVICE="fd-visiology-report-builder-@branch@"
+    - NS=front
+    - umask 077
+    - set +x
+    - printf '%s\n' '@secret:ssh-private-key@' > /tmp/deploy_key
+    - chmod 600 /tmp/deploy_key
+    - eval "$(ssh-agent -s)"
+    - ssh-add /tmp/deploy_key
+    - SSH_USER='@secret:ssh-username@'
+    - SSH_HOST='@secret:ssh-host@'
+    - SSH_PORT='@secret:ssh-port@'
+    - set -x
+    - |
+      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+        -p "$SSH_PORT" "${SSH_USER}@@${SSH_HOST}" \
+        "kubectl --context=front rollout restart deployment/${SERVICE} -n ${NS} && \
+         kubectl --context=front rollout status deployment/${SERVICE} -n ${NS} --timeout=300s"
+    - echo "DEPLOYED ${SERVICE} in ${NS}"
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  jobDependencies:
+  - jobName: build-and-push
+    requireSuccessful: true
+  retryCondition: never
+  maxRetries: 1
+  retryDelay: 30
+  timeout: 1800
