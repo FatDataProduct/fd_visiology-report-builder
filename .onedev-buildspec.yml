@@ -11,9 +11,24 @@ jobs:
     withLfs: false
     force: false
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  retryCondition: never
+  maxRetries: 3
+  retryDelay: 30
+  timeout: 3600
+- name: Push to GitHub
+  steps:
+  - !PushRepository
+    name: push
+    remoteUrl: https://github.com/FatDataProduct/fd_visiology-report-builder.git
+    userName: x-access-token
+    passwordSecret: github-access-token
+    force: false
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   triggers:
-  - !ScheduleTrigger
-    cronExpression: 0 0 */4 * * ?
+  - !BranchUpdateTrigger
+    branches: '*'
+  - !TagCreateTrigger
+    tags: '*'
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
