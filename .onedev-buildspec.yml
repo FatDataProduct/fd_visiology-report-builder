@@ -19,7 +19,7 @@ jobs:
   retryDelay: 30
   timeout: 3600
 - name: build-and-push
-  jobExecutor: fdp-docker
+  jobExecutor: angron-nix-docker
   steps:
   - !CheckoutStep
     name: checkout
@@ -31,19 +31,22 @@ jobs:
     name: oci-build-push
     buildPath: .
     dockerfile: Dockerfile
-    tags: ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@branch@ ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@commit_hash@
+    tags: ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@branch@ ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@commit_hash@ ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:latest
     moreOptions: --build-arg APP_ENV=production
     registryLogins:
     - registryUrl: ghcr.io
       userName: tokuseiHagane
       passwordSecret: ghcr-token
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  triggers:
+  - !BranchUpdateTrigger
+    branches: main
   retryCondition: never
   maxRetries: 1
   retryDelay: 30
   timeout: 7200
 - name: deploy
-  jobExecutor: fdp-docker
+  jobExecutor: angron-nix-docker
   steps:
   - !CommandStep
     name: k8s-rollout-restart
@@ -73,6 +76,8 @@ jobs:
   jobDependencies:
   - jobName: build-and-push
     requireSuccessful: true
+  triggers:
+  - !DependencyFinishedTrigger {}
   retryCondition: never
   maxRetries: 1
   retryDelay: 30
