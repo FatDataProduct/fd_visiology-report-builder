@@ -1,8 +1,8 @@
-version: 6
+version: 53
 jobs:
 - name: Pull from GitHub
   steps:
-  - !PullRepository
+  - type: PullRepository
     name: pull
     remoteUrl: https://github.com/FatDataProduct/fd_visiology-report-builder.git
     userName: x-access-token
@@ -10,90 +10,149 @@ jobs:
     refs: refs/heads/* refs/tags/*
     withLfs: false
     force: false
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+    condition: SUCCESSFUL
+    optional: false
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
+  includeUpstreamWhenRebuild: false
+  includeDownstreamWhenRebuild: false
   timeout: 3600
 - name: Push to GitHub
   steps:
-  - !PushRepository
+  - type: PushRepository
     name: push
     remoteUrl: https://github.com/FatDataProduct/fd_visiology-report-builder.git
     userName: x-access-token
     passwordSecret: github-access-token
     force: false
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+    condition: SUCCESSFUL
+    optional: false
   triggers:
-  - !BranchUpdateTrigger
+  - type: BranchUpdateTrigger
     branches: '*'
-  - !TagCreateTrigger
+    userMatch: anyone
+  - type: TagCreateTrigger
     tags: '*'
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
+  includeUpstreamWhenRebuild: false
+  includeDownstreamWhenRebuild: false
   timeout: 3600
 - name: build-and-push
   jobExecutor: angron-nix-docker
   steps:
-  - !CheckoutStep
+  - type: CheckoutStep
     name: checkout
-    cloneCredential: !DefaultCredential {}
+    cloneCredential:
+      type: DefaultCredential
     withLfs: false
     withSubmodules: false
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  - !BuildImageStep
+    condition: SUCCESSFUL
+    optional: false
+  - type: CommandStep
+    name: k8s-apply
+    runInContainer: true
+    image: alpine:3.20
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: |+
+        set -eu
+        apk add --no-cache openssh-client >/dev/null
+        APPLY_PATH=deploy/k8s
+        APPLY_ARG=@branch@
+        WORKDIR=/tmp/onedev-apply-@commit_hash@
+        umask 077
+        set +x
+        printf '%s\n' '@secret:ssh-private-key@' > /tmp/deploy_key
+        chmod 600 /tmp/deploy_key
+        eval "$(ssh-agent -s)"
+        ssh-add /tmp/deploy_key
+        SSH_USER='@secret:ssh-username@'
+        SSH_HOST='@secret:ssh-host@'
+        SSH_PORT='@secret:ssh-port@'
+        set -x
+        SSH_BASE="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+        ssh $SSH_BASE -p "$SSH_PORT" "${SSH_USER}@@${SSH_HOST}" \
+          "rm -rf $WORKDIR && mkdir -p $WORKDIR"
+        scp $SSH_BASE -P "$SSH_PORT" -r "$APPLY_PATH" \
+          "${SSH_USER}@@${SSH_HOST}:$WORKDIR/deploy-k8s"
+        ssh $SSH_BASE -p "$SSH_PORT" "${SSH_USER}@@${SSH_HOST}" \
+          "set -euo pipefail; bash $WORKDIR/deploy-k8s/apply.sh $APPLY_ARG; rm -rf $WORKDIR"
+
+    runAs: 0:0
+    useTTY: false
+    condition: SUCCESSFUL
+    optional: false
+  - type: BuildImageStep
     name: oci-build-push
     buildPath: .
     dockerfile: Dockerfile
-    tags: ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@branch@ ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@commit_hash@ ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:latest
-    moreOptions: --build-arg APP_ENV=production
+    output:
+      type: RegistryOutput
+      tags: ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@branch@ ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:@commit_hash@ ghcr.io/fatdataproduct/fd_visiology-report-builder/fd_visiology-report-builder-@branch@:latest
     registryLogins:
     - registryUrl: ghcr.io
       userName: tokuseiHagane
       passwordSecret: ghcr-token
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+    moreOptions: --build-arg APP_ENV=production
+    condition: SUCCESSFUL
+    optional: false
   triggers:
-  - !BranchUpdateTrigger
+  - type: BranchUpdateTrigger
     branches: main
+    userMatch: anyone
   retryCondition: never
   maxRetries: 1
   retryDelay: 30
+  includeUpstreamWhenRebuild: false
+  includeDownstreamWhenRebuild: false
   timeout: 7200
 - name: deploy
   jobExecutor: angron-nix-docker
   steps:
-  - !CommandStep
+  - type: CommandStep
     name: k8s-rollout-restart
+    runInContainer: true
     image: alpine:3.20
-    commands:
-    - set -eu
-    - apk add --no-cache openssh-client >/dev/null
-    - SERVICE="fd-visiology-report-builder-@branch@"
-    - NS=front
-    - umask 077
-    - set +x
-    - printf '%s\n' '@secret:ssh-private-key@' > /tmp/deploy_key
-    - chmod 600 /tmp/deploy_key
-    - eval "$(ssh-agent -s)"
-    - ssh-add /tmp/deploy_key
-    - SSH_USER='@secret:ssh-username@'
-    - SSH_HOST='@secret:ssh-host@'
-    - SSH_PORT='@secret:ssh-port@'
-    - set -x
-    - |
-      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        -p "$SSH_PORT" "${SSH_USER}@@${SSH_HOST}" \
-        "kubectl --context=front rollout restart deployment/${SERVICE} -n ${NS} && \
-         kubectl --context=front rollout status deployment/${SERVICE} -n ${NS} --timeout=300s"
-    - echo "DEPLOYED ${SERVICE} in ${NS}"
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+      commands: |
+        set -eu
+        apk add --no-cache openssh-client >/dev/null
+        SERVICE="fd-visiology-report-builder-@branch@"
+        NS=front
+        umask 077
+        set +x
+        printf '%s\n' '@secret:ssh-private-key@' > /tmp/deploy_key
+        chmod 600 /tmp/deploy_key
+        eval "$(ssh-agent -s)"
+        ssh-add /tmp/deploy_key
+        SSH_USER='@secret:ssh-username@'
+        SSH_HOST='@secret:ssh-host@'
+        SSH_PORT='@secret:ssh-port@'
+        set -x
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          -p "$SSH_PORT" "${SSH_USER}@@${SSH_HOST}" \
+          "kubectl --context=front rollout restart deployment/${SERVICE} -n ${NS} && \
+           kubectl --context=front rollout status deployment/${SERVICE} -n ${NS} --timeout=300s"
+
+        echo "DEPLOYED ${SERVICE} in ${NS}"
+    runAs: 0:0
+    useTTY: false
+    condition: SUCCESSFUL
+    optional: false
+  triggers:
+  - type: DependencyFinishedTrigger
   jobDependencies:
   - jobName: build-and-push
     requireSuccessful: true
-  triggers:
-  - !DependencyFinishedTrigger {}
   retryCondition: never
   maxRetries: 1
   retryDelay: 30
+  includeUpstreamWhenRebuild: false
+  includeDownstreamWhenRebuild: false
   timeout: 1800
